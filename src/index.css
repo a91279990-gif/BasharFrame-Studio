@@ -1,0 +1,127 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@property --chroma-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes chroma-ring-spin {
+  to {
+    --chroma-angle: 360deg;
+  }
+}
+
+@layer base {
+  :root {
+    --font-display: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
+    --font-body: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Hind Siliguri', ui-monospace, monospace;
+    --c1: #2563eb;
+    --c2: #06b6d4;
+    --c3: #10b981;
+    --c4: #f59e0b;
+    --c5: #ea580c;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #0b0b0e;
+    color: #f4f4f5;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Rotating outer multi-color ring strictly outside text/element (solid opaque padding-box inside) */
+.chroma-text-ring {
+  position: relative;
+  border: 1.5px solid transparent;
+  background-image:
+    linear-gradient(var(--ring-bg, #101015), var(--ring-bg, #101015)),
+    conic-gradient(
+      from var(--chroma-angle),
+      var(--c1),
+      var(--c2),
+      var(--c3),
+      var(--c4),
+      var(--c5),
+      var(--c1)
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: chroma-ring-spin 5s linear infinite;
+}
+
+.chroma-text-ring-soft {
+  position: relative;
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(var(--ring-bg, #101015), var(--ring-bg, #101015)),
+    conic-gradient(
+      from var(--chroma-angle),
+      var(--c1),
+      var(--c2),
+      var(--c3),
+      var(--c4),
+      var(--c5),
+      var(--c1)
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: chroma-ring-spin 6.5s linear infinite;
+}
+
+.chroma-text-glow {
+  box-shadow:
+    0 0 14px -3px color-mix(in srgb, var(--c1) 36%, transparent),
+    0 0 18px -4px color-mix(in srgb, var(--c3) 26%, transparent);
+}
+
+.export-active .chroma-text-ring,
+.export-active .chroma-text-ring-soft {
+  animation-play-state: paused !important;
+}
+
+/* Custom sleek studio range slider */
+input[type='range'].studio-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+input[type='range'].studio-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #f4f4f5;
+  border: 2px solid #0b0b0e;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+input[type='range'].studio-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type='range'].studio-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #f4f4f5;
+  border: 2px solid #0b0b0e;
+  cursor: pointer;
+}

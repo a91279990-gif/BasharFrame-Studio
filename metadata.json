@@ -1,0 +1,6 @@
+{
+  "name": "ChromaFrame Studio",
+  "description": "Professional video outer chroma border & ambient glow studio with real-time rotation controls and full video export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

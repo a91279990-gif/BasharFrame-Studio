@@ -1,0 +1,244 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidHexColor(val) {
+      return val is string && val.size() == 7 && val.matches('^#[0-9a-fA-F]{6}$');
+    }
+
+    function isValidAspectRatio(val) {
+      return val is string && val in ['original', '16:9', '9:16', '1:1', '4:5'];
+    }
+
+    // --- Entity Validation Blueprints ---
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 80
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBorderPreset(data, presetId, userId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'name', 'paletteId', 'colors',
+          'borderWidth', 'glowSpread', 'glowIntensity',
+          'cornerRadius', 'stageMargin', 'rotationSpeed',
+          'direction', 'aspectRatio', 'backdropColor',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'paletteId', 'colors',
+          'borderWidth', 'glowSpread', 'glowIntensity',
+          'cornerRadius', 'stageMargin', 'rotationSpeed',
+          'direction', 'aspectRatio', 'backdropColor',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string
+        && data.id == presetId
+        && isValidId(data.id)
+        && data.ownerId is string
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 64
+        && isValidId(data.paletteId)
+        && data.paletteId.size() <= 40
+        && data.colors is list
+        && data.colors.size() >= 2
+        && data.colors.size() <= 6
+        && isValidHexColor(data.colors[0])
+        && isValidHexColor(data.colors[1])
+        && data.borderWidth is number
+        && data.borderWidth >= 2
+        && data.borderWidth <= 32
+        && data.glowSpread is number
+        && data.glowSpread >= 0
+        && data.glowSpread <= 80
+        && data.glowIntensity is number
+        && data.glowIntensity >= 0.1
+        && data.glowIntensity <= 1.0
+        && data.cornerRadius is number
+        && data.cornerRadius >= 0
+        && data.cornerRadius <= 64
+        && data.stageMargin is number
+        && data.stageMargin >= 16
+        && data.stageMargin <= 120
+        && data.rotationSpeed is number
+        && data.rotationSpeed >= 0
+        && data.rotationSpeed <= 5
+        && data.direction is string
+        && data.direction in ['cw', 'ccw']
+        && isValidAspectRatio(data.aspectRatio)
+        && isValidHexColor(data.backdropColor)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidExportRecord(data, exportId, userId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'fileName', 'aspectRatio',
+          'resolution', 'durationSec', 'fileSizeBytes',
+          'paletteName', 'format', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'fileName', 'aspectRatio',
+          'resolution', 'durationSec', 'fileSizeBytes',
+          'paletteName', 'format', 'createdAt'
+        ])
+        && data.id is string
+        && data.id == exportId
+        && isValidId(data.id)
+        && data.ownerId is string
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.fileName is string
+        && data.fileName.size() >= 1
+        && data.fileName.size() <= 120
+        && isValidAspectRatio(data.aspectRatio)
+        && data.resolution is string
+        && data.resolution.size() >= 3
+        && data.resolution.size() <= 24
+        && data.durationSec is number
+        && data.durationSec >= 0
+        && data.durationSec <= 7200
+        && data.fileSizeBytes is number
+        && data.fileSizeBytes >= 0
+        && data.fileSizeBytes <= 2147483648
+        && data.paletteName is string
+        && data.paletteName.size() >= 1
+        && data.paletteName.size() <= 64
+        && data.format is string
+        && data.format in ['webm', 'mp4', 'png']
+        && data.createdAt is timestamp;
+    }
+
+    function userExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    // --- User Profiles ---
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
+
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      // --- Saved Border Presets ---
+      match /presets/{presetId} {
+        allow get: if isValidId(userId)
+          && isValidId(presetId)
+          && isOwner(userId)
+          && userExists(userId);
+
+        allow list: if isOwner(userId)
+          && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(presetId)
+          && isOwner(userId)
+          && isValidBorderPreset(incoming(), presetId, userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId);
+
+        allow update: if isValidId(userId)
+          && isValidId(presetId)
+          && isOwner(userId)
+          && isValidBorderPreset(incoming(), presetId, userId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'paletteId', 'colors', 'borderWidth', 'glowSpread',
+            'glowIntensity', 'cornerRadius', 'stageMargin', 'rotationSpeed',
+            'direction', 'aspectRatio', 'backdropColor', 'updatedAt'
+          ])
+          && userExists(userId);
+
+        allow delete: if isValidId(userId)
+          && isValidId(presetId)
+          && isOwner(userId)
+          && userExists(userId);
+      }
+
+      // --- Export History ---
+      match /exports/{exportId} {
+        allow get: if isValidId(userId)
+          && isValidId(exportId)
+          && isOwner(userId)
+          && userExists(userId);
+
+        allow list: if isOwner(userId)
+          && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(exportId)
+          && isOwner(userId)
+          && isValidExportRecord(incoming(), exportId, userId)
+          && incoming().createdAt == request.time
+          && userExists(userId);
+
+        allow update: if false;
+
+        allow delete: if isValidId(userId)
+          && isValidId(exportId)
+          && isOwner(userId)
+          && userExists(userId);
+      }
+    }
+  }
+}

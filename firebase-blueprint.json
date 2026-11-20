@@ -1,0 +1,235 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Authenticated studio user profile stored under their own UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth user UID."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "User display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Optional avatar URL."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "createdAt", "updatedAt"]
+    },
+    "BorderPreset": {
+      "title": "Border Preset",
+      "description": "Saved outer chroma border configuration belonging to a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique preset identifier."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Human-readable preset name."
+        },
+        "paletteId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Selected palette identifier."
+        },
+        "colors": {
+          "type": "array",
+          "description": "Ordered hex color stops for the rotating outer gradient (2 to 6 hex colors)."
+        },
+        "borderWidth": {
+          "type": "number",
+          "description": "Outer border ring thickness in pixels (2 to 32)."
+        },
+        "glowSpread": {
+          "type": "number",
+          "description": "Outer ambient blur radius in pixels (0 to 80)."
+        },
+        "glowIntensity": {
+          "type": "number",
+          "description": "Outer glow opacity from 0.1 to 1.0."
+        },
+        "cornerRadius": {
+          "type": "number",
+          "description": "Video frame corner radius in pixels (0 to 64)."
+        },
+        "stageMargin": {
+          "type": "number",
+          "description": "Outer stage margin around the glowing border in pixels (16 to 120)."
+        },
+        "rotationSpeed": {
+          "type": "number",
+          "description": "Rotation speed multiplier (0 to 5)."
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["cw", "ccw"],
+          "description": "Rotation direction: clockwise (cw) or counter-clockwise (ccw)."
+        },
+        "aspectRatio": {
+          "type": "string",
+          "enum": ["original", "16:9", "9:16", "1:1", "4:5"],
+          "description": "Target export aspect ratio."
+        },
+        "backdropColor": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 9,
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Hex color of the outer stage background."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "paletteId",
+        "colors",
+        "borderWidth",
+        "glowSpread",
+        "glowIntensity",
+        "cornerRadius",
+        "stageMargin",
+        "rotationSpeed",
+        "direction",
+        "aspectRatio",
+        "backdropColor",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ExportRecord": {
+      "title": "Export Record",
+      "description": "Metadata log of a rendered video download belonging to a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique export record identifier."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Downloaded file name."
+        },
+        "aspectRatio": {
+          "type": "string",
+          "enum": ["original", "16:9", "9:16", "1:1", "4:5"],
+          "description": "Exported video aspect ratio."
+        },
+        "resolution": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24,
+          "description": "Pixel dimensions e.g. 1920x1080."
+        },
+        "durationSec": {
+          "type": "number",
+          "description": "Duration of the exported clip in seconds."
+        },
+        "fileSizeBytes": {
+          "type": "number",
+          "description": "Output file size in bytes."
+        },
+        "paletteName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Palette label used in export."
+        },
+        "format": {
+          "type": "string",
+          "enum": ["webm", "mp4", "png"],
+          "description": "Output file format."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when export completed."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "fileName",
+        "aspectRatio",
+        "resolution",
+        "durationSec",
+        "fileSizeBytes",
+        "paletteName",
+        "format",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document owned by userId."
+    },
+    "/users/{userId}/presets/{presetId}": {
+      "schema": { "$ref": "#/entities/BorderPreset" },
+      "description": "Saved outer border presets belonging to userId."
+    },
+    "/users/{userId}/exports/{exportId}": {
+      "schema": { "$ref": "#/entities/ExportRecord" },
+      "description": "Rendered video export history belonging to userId."
+    }
+  }
+}
